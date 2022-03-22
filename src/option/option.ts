@@ -13,7 +13,7 @@ export class Option<T> {
   }
   match<U>(
     { some, none }: {
-      some: (value: T) => U;
+      some: (value: NonNullable<T>) => U;
       none: () => U;
     },
   ): U {
@@ -31,25 +31,25 @@ export class Option<T> {
   }
   andThen<U>(f: (value: NonNullable<T>) => Option<U>): Option<U | undefined> {
     return this.match({
-      some: (value) => f(value!), // value is defined
+      some: (value) => f(value),
       none: () => Option.none(),
     });
   }
   filter(f: (value: NonNullable<T>) => boolean): Option<T | undefined> {
     return this.match({
-      some: (value) => (f(value!) ? Option.some(value!) : Option.none()), // value is defined
+      some: (value) => (f(value) ? Option.some(value!) : Option.none()),
       none: () => Option.none(),
     });
   }
   expect(message: string): T {
-    if (this.value === undefined) {
+    if (this.isNone()) {
       throw new Error(message);
     }
-    return this.value;
+    return this.unwrap();
   }
   flatten<U>(this: Option<Option<U> | undefined>): Option<U | undefined> {
     return this.match({
-      some: (value) => value!, // value is defined
+      some: (value) => value,
       none: () => Option.none(),
     });
   }
@@ -72,23 +72,23 @@ export class Option<T> {
   }
   map<U>(f: (value: NonNullable<T>) => NonNullable<U>): Option<U | undefined> {
     return this.match({
-      some: (value) => Option.some(f(value!)), // value is defined
+      some: (value) => Option.some(f(value)),
       none: () => Option.none(),
     });
   }
   mapOr<U>(defaultValue: U, f: (value: NonNullable<T>) => U): U {
     return this.match({
-      some: (value) => f(value!), // value is defined
+      some: (value) => f(value),
       none: () => defaultValue,
     });
   }
   mapOrElse<U>(
-    defaultValue: () => U,
-    f: (value: T) => U,
+    defaultValueFn: () => U,
+    f: (value: NonNullable<T>) => U,
   ): U {
     return this.match({
-      some: (value) => f(value),
-      none: defaultValue,
+      some: (value) => f(value!),
+      none: defaultValueFn,
     });
   }
   or(other: Option<T>): Option<T | undefined> {
@@ -117,22 +117,22 @@ export class Option<T> {
     });
   }
   unwrap(): T {
-    if (this.value === undefined) {
+    if (this.isNone()) {
       throw new Error("Option.unwrap: None");
     }
-    return this.value;
+    return this.value!; // value is defined
   }
   unwrapOr(value: T): T {
     if (this.isNone()) {
       return value;
     }
-    return this.value!; //value is defined
+    return this.unwrap();
   }
   unwrapOrElse(f: () => T): T {
     if (this.isNone()) {
       return f();
     }
-    return this.value!; //value is defined
+    return this.unwrap();
   }
   xor(other: Option<T>): Option<T | undefined> {
     if (this.isSome() && other.isSome()) {

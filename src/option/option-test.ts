@@ -117,6 +117,8 @@ Deno.test("Option.xor", () => {
   assertEquals(x.xor(y), Option.none());
   assertEquals(x.xor(z), x);
   assertEquals(y.xor(z), y);
+  assertEquals(z.xor(z), Option.none());
+  assertEquals(z.xor(y), y);
 });
 Deno.test("Option.take", () => {
   {
@@ -165,4 +167,11 @@ Deno.test("Option.flatten", () => {
 
   const q = Option.some(Option.some(Option.some(1)));
   assertEquals(q.flatten(), Option.some(Option.some(1)));
+});
+Deno.test("Option.mapOrElse", () => {
+  const x = Option.some(1);
+  const y = Option.none();
+
+  assertEquals(x.mapOrElse(() => 0, (a) => a + 1), 2);
+  assertEquals(y.mapOrElse(() => 0, () => 5), 0);
 });
