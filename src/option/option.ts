@@ -29,14 +29,17 @@ export class Option<T> {
       none: () => Option.none(),
     });
   }
-  and_then<U>(f: (value: T) => Option<U>): Option<U | undefined> {
+  andThen<U>(f: (value: NonNullable<T>) => Option<U>): Option<U | undefined> {
     return this.match({
-      some: f,
+      some: (value) => f(value!), // value is defined
       none: () => Option.none(),
     });
   }
-  contains(value: NonNullable<T>): boolean {
-    return this.value === value;
+  filter(f: (value: NonNullable<T>) => boolean): Option<T | undefined> {
+    return this.match({
+      some: (value) => (f(value!) ? Option.some(value!) : Option.none()), // value is defined
+      none: () => Option.none(),
+    });
   }
   expect(message: string): T {
     if (this.value === undefined) {
@@ -44,23 +47,11 @@ export class Option<T> {
     }
     return this.value;
   }
-  flatten<U>(this: Option<Option<U>>): Option<U | undefined> {
+  flatten<U>(this: Option<Option<U> | undefined>): Option<U | undefined> {
     return this.match({
-      some: (value) => value,
+      some: (value) => value!, // value is defined
       none: () => Option.none(),
     });
-  }
-  getOrInsert(value: NonNullable<T>): T {
-    if (this.isNone()) {
-      this.value = Option.some(value).value!;
-    }
-    return this.value!; // value is defined
-  }
-  getOrInsertWith(f: () => T): T {
-    if (this.isNone()) {
-      this.value = f();
-    }
-    return this.value!; // value is defined
   }
   take(): Option<T | undefined> {
     if (this.isNone()) {
@@ -69,9 +60,6 @@ export class Option<T> {
     const value = this.value;
     this.value = undefined;
     return Option.some(value!); // value is defined
-  }
-  insert(value: T): void {
-    this.value = value;
   }
   isNone() {
     return this.value === undefined;
@@ -82,15 +70,15 @@ export class Option<T> {
   *iter() {
     yield this.value;
   }
-  map<U>(f: (value: T) => NonNullable<U>): Option<U | undefined> {
+  map<U>(f: (value: NonNullable<T>) => NonNullable<U>): Option<U | undefined> {
     return this.match({
-      some: (value) => Option.some(f(value)),
+      some: (value) => Option.some(f(value!)), // value is defined
       none: () => Option.none(),
     });
   }
-  mapOr<U>(defaultValue: U, f: (value: T) => U): U {
+  mapOr<U>(defaultValue: U, f: (value: NonNullable<T>) => U): U {
     return this.match({
-      some: (value) => f(value),
+      some: (value) => f(value!), // value is defined
       none: () => defaultValue,
     });
   }
@@ -157,5 +145,11 @@ export class Option<T> {
       some: () => this,
       none: () => other,
     });
+  }
+  zip<U>(other: Option<U>): Option<[T, U] | undefined> {
+    if (this.isNone() || other.isNone()) {
+      return Option.none();
+    }
+    return Option.some([this.unwrap(), other.unwrap()]);
   }
 }

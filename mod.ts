@@ -1,1 +1,1 @@
-export { Option } from "./src/option.ts";
+export { Option } from "./src/option/option.ts";
