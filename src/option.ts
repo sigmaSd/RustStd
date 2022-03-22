@@ -2,10 +2,10 @@ export class Option<T> {
   // write all rust option functions
   // link here https://doc.rust-lang.org/std/option/enum.Option.html
   // go go copilot
-  constructor(private value: T | undefined) {
+  private constructor(private value: T | undefined) {
     this.value = value;
   }
-  static some<T>(value: T): Option<T | undefined> {
+  static some<T>(value: NonNullable<T>): Option<T | undefined> {
     return new Option(value);
   }
   static none<T>(): Option<T | undefined> {
@@ -17,10 +17,10 @@ export class Option<T> {
       none: () => U;
     },
   ): U {
-    if (this.value === undefined) {
+    if (this.isNone()) {
       return none();
     } else {
-      return some(this.value);
+      return some(this.value!);
     }
   }
   and<U>(other: Option<U>): Option<U | undefined> {
@@ -35,7 +35,7 @@ export class Option<T> {
       none: () => Option.none(),
     });
   }
-  contains(value: T): boolean {
+  contains(value: NonNullable<T>): boolean {
     return this.value === value;
   }
   expect(message: string): T {
@@ -50,9 +50,9 @@ export class Option<T> {
       none: () => Option.none(),
     });
   }
-  getOrInsert(value: T): T {
+  getOrInsert(value: NonNullable<T>): T {
     if (this.isNone()) {
-      this.value = value;
+      this.value = Option.some(value).value!;
     }
     return this.value!; // value is defined
   }
@@ -68,7 +68,7 @@ export class Option<T> {
     }
     const value = this.value;
     this.value = undefined;
-    return Option.some(value);
+    return Option.some(value!); // value is defined
   }
   insert(value: T): void {
     this.value = value;
@@ -82,7 +82,7 @@ export class Option<T> {
   *iter() {
     yield this.value;
   }
-  map<U>(f: (value: T) => U): Option<U | undefined> {
+  map<U>(f: (value: T) => NonNullable<U>): Option<U | undefined> {
     return this.match({
       some: (value) => Option.some(f(value)),
       none: () => Option.none(),
@@ -115,10 +115,18 @@ export class Option<T> {
       none: f,
     });
   }
-  replace(value: T): Option<T | undefined> {
-    const oldValue = this.value;
-    this.value = value;
-    return Option.some(oldValue);
+  replace(value: NonNullable<T>): Option<T | undefined> {
+    return this.match({
+      some: () => {
+        const oldValue = this.value;
+        this.value = value;
+        return Option.some(oldValue!); // oldValue is defined
+      },
+      none: () => {
+        this.value = value;
+        return Option.none();
+      },
+    });
   }
   unwrap(): T {
     if (this.value === undefined) {
