@@ -62,7 +62,9 @@ Deno.test("Option.mapOr", () => {
 });
 Deno.test("Option.iter", () => {
   const x = Option.some(4);
-  assertEquals(x.iter().next().value, 4);
+  const xIter = x.iter();
+  assertEquals(xIter.next().value, 4);
+  assertEquals(xIter.next().value, undefined);
 
   const y = Option.none<number>();
   assertEquals(y.iter().next().value, undefined);
