@@ -29,7 +29,7 @@ Deno.test("Result.unwrapErr", () => {
 Deno.test("Result.expectErr", () => {
   const ok = Result.Ok(4);
   const err = Result.Err("error");
-  assertThrows(() => ok.expectErr("err!"));
+  assertThrows(() => ok.expectErr("err!"), Error, "err!: 4");
   assertEquals(err.expectErr("err!"), "error");
 });
 Deno.test("Result.ok", () => {
