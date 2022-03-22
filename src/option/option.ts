@@ -5,10 +5,10 @@ export class Option<T> {
   private constructor(private value: T | undefined) {
     this.value = value;
   }
-  static some<T>(value: NonNullable<T>): Option<T | undefined> {
+  static Some<T>(value: NonNullable<T>): Option<T | undefined> {
     return new Option(value);
   }
-  static none<T>(): Option<T | undefined> {
+  static None<T>(): Option<T | undefined> {
     return new Option(undefined);
   }
   match<U>(
@@ -26,19 +26,19 @@ export class Option<T> {
   and<U>(other: Option<U>): Option<U | undefined> {
     return this.match({
       some: () => other,
-      none: () => Option.none(),
+      none: () => Option.None(),
     });
   }
   andThen<U>(f: (value: NonNullable<T>) => Option<U>): Option<U | undefined> {
     return this.match({
       some: (value) => f(value),
-      none: () => Option.none(),
+      none: () => Option.None(),
     });
   }
   filter(f: (value: NonNullable<T>) => boolean): Option<T | undefined> {
     return this.match({
-      some: (value) => (f(value) ? Option.some(value!) : Option.none()),
-      none: () => Option.none(),
+      some: (value) => (f(value) ? Option.Some(value!) : Option.None()),
+      none: () => Option.None(),
     });
   }
   expect(message: string): T {
@@ -50,16 +50,16 @@ export class Option<T> {
   flatten<U>(this: Option<Option<U> | undefined>): Option<U | undefined> {
     return this.match({
       some: (value) => value,
-      none: () => Option.none(),
+      none: () => Option.None(),
     });
   }
   take(): Option<T | undefined> {
     if (this.isNone()) {
-      return Option.none();
+      return Option.None();
     }
     const value = this.value;
     this.value = undefined;
-    return Option.some(value!); // value is defined
+    return Option.Some(value!); // value is defined
   }
   isNone() {
     return this.value === undefined;
@@ -72,8 +72,8 @@ export class Option<T> {
   }
   map<U>(f: (value: NonNullable<T>) => NonNullable<U>): Option<U | undefined> {
     return this.match({
-      some: (value) => Option.some(f(value)),
-      none: () => Option.none(),
+      some: (value) => Option.Some(f(value)),
+      none: () => Option.None(),
     });
   }
   mapOr<U>(defaultValue: U, f: (value: NonNullable<T>) => U): U {
@@ -108,11 +108,11 @@ export class Option<T> {
       some: () => {
         const oldValue = this.value;
         this.value = value;
-        return Option.some(oldValue!); // oldValue is defined
+        return Option.Some(oldValue!); // oldValue is defined
       },
       none: () => {
         this.value = value;
-        return Option.none();
+        return Option.None();
       },
     });
   }
@@ -136,10 +136,10 @@ export class Option<T> {
   }
   xor(other: Option<T>): Option<T | undefined> {
     if (this.isSome() && other.isSome()) {
-      return Option.none();
+      return Option.None();
     }
     if (this.isNone() && other.isNone()) {
-      return Option.none();
+      return Option.None();
     }
     return this.match({
       some: () => this,
@@ -148,8 +148,8 @@ export class Option<T> {
   }
   zip<U>(other: Option<U>): Option<[T, U] | undefined> {
     if (this.isNone() || other.isNone()) {
-      return Option.none();
+      return Option.None();
     }
-    return Option.some([this.unwrap(), other.unwrap()]);
+    return Option.Some([this.unwrap(), other.unwrap()]);
   }
 }
